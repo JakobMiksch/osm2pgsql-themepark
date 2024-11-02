@@ -124,27 +124,21 @@ themepark:add_table{
     }},
     tiles = false
 }
-
 themepark:add_proc('relation', function(object, data)
     local relation_type = object:grab_tag('type')
+    local geog
 
     if relation_type == 'route' then
-        themepark:insert('geom_rels', {
-            geog = object:as_multilinestring()
-        }, object.tags)
-        return
+        geog = object:as_multilinestring()
+    elseif relation_type == 'boundary' or (relation_type == 'multipolygon' and object.tags.boundary) then
+        geog = object:as_multilinestring():line_merge()
+    elseif relation_type == 'multipolygon' then
+        geog = object:as_multipolygon()
     end
 
-    if relation_type == 'boundary' or (relation_type == 'multipolygon' and object.tags.boundary) then
+    if geog then
         themepark:insert('geom_rels', {
-            geog = object:as_multilinestring():line_merge()
-        }, object.tags)
-        return
-    end
-
-    if relation_type == 'multipolygon' then
-        themepark:insert('geom_rels', {
-            geog = object:as_multipolygon()
+            geog = geog
         }, object.tags)
     end
 end)
