@@ -41,29 +41,50 @@ end
 
 themepark:add_table{
     name = 'geom_nodes',
-    geom = 'point',
+    geog = 'point',
     ids = {
         type = 'any',
         type_column = 'osm_type',
         id_column = 'osm_id'
     },
+    columns = {{
+        column = 'geog',
+        type = 'point',
+        projection = '4326',
+        not_null = true,
+        sql_type = 'geography(point)'
+    }},
+    indexes = {{
+        column = 'geog',
+        method = 'gist'
+    }},
     tiles = false
 }
 
 themepark:add_proc('node', function(object, data)
     themepark:insert('geom_nodes', {
-        geom = object:as_point()
+        geog = object:as_point()
     }, object.tags)
 end)
 
 themepark:add_table{
     name = 'geom_ways',
-    geom = 'geometry',
     ids = {
         type = 'any',
         type_column = 'osm_type',
         id_column = 'osm_id'
     },
+    columns = {{
+        column = 'geog',
+        type = 'geometry',
+        projection = '4326',
+        not_null = true,
+        sql_type = 'geography(geometry)'
+    }},
+    indexes = {{
+        column = 'geog',
+        method = 'gist'
+    }},
     tiles = false
 }
 
@@ -72,11 +93,11 @@ themepark:add_proc('way', function(object, data)
     attributes = {}
     if object.is_closed and has_area_tags(object.tags) then
         attributes = {
-            geom = object:as_polygon()
+            geog = object:as_polygon()
         }
     else
         attributes = {
-            geom = object:as_linestring()
+            geog = object:as_linestring()
         }
     end
 
@@ -85,12 +106,22 @@ end)
 
 themepark:add_table{
     name = 'geom_rels',
-    geom = 'geometry',
     ids = {
         type = 'any',
         type_column = 'osm_type',
         id_column = 'osm_id'
     },
+    columns = {{
+        column = 'geog',
+        type = 'geometry',
+        projection = '4326',
+        not_null = true,
+        sql_type = 'geography(geometry)'
+    }},
+    indexes = {{
+        column = 'geog',
+        method = 'gist'
+    }},
     tiles = false
 }
 
@@ -99,21 +130,21 @@ themepark:add_proc('relation', function(object, data)
 
     if relation_type == 'route' then
         themepark:insert('geom_rels', {
-            geom = object:as_multilinestring()
+            geog = object:as_multilinestring()
         }, object.tags)
         return
     end
 
     if relation_type == 'boundary' or (relation_type == 'multipolygon' and object.tags.boundary) then
         themepark:insert('geom_rels', {
-            geom = object:as_multilinestring():line_merge()
+            geog = object:as_multilinestring():line_merge()
         }, object.tags)
         return
     end
 
     if relation_type == 'multipolygon' then
         themepark:insert('geom_rels', {
-            geom = object:as_multipolygon()
+            geog = object:as_multipolygon()
         }, object.tags)
     end
 end)
